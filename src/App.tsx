@@ -1,17 +1,29 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom';
 import { MotionConfig } from 'framer-motion';
 import { AppProvider, useApp } from './store';
 import { AdminLayout, PublicLayout } from './components/Layout';
 import { EmptyState, Icon } from './components/ui';
 import { HomePage } from './pages/Home';
-import { CorporatePage, FleetDetailPage, FleetPage, PackagesPage, TermsPage } from './pages/PublicPages';
-import { BookingPage, BookingSuccessPage } from './pages/Booking';
-import { AdminDashboard, AdminLoginPage } from './pages/AdminDashboard';
-import { AdminBookings } from './pages/AdminBookings';
-import { AdminCustomersPage, AdminFleetPage, AdminPaymentsPage, AdminPricingPage, EntityPage } from './pages/AdminData';
-import { AdminDocumentsPage } from './pages/AdminDocuments';
-import { AdminCalendarPage, AdminGPSPage, AdminReportsPage } from './pages/AdminOperations';
+const CorporatePage = lazy(() => import('./pages/PublicPages').then(module => ({ default: module.CorporatePage })));
+const FleetDetailPage = lazy(() => import('./pages/PublicPages').then(module => ({ default: module.FleetDetailPage })));
+const FleetPage = lazy(() => import('./pages/PublicPages').then(module => ({ default: module.FleetPage })));
+const PackagesPage = lazy(() => import('./pages/PublicPages').then(module => ({ default: module.PackagesPage })));
+const TermsPage = lazy(() => import('./pages/PublicPages').then(module => ({ default: module.TermsPage })));
+const BookingPage = lazy(() => import('./pages/Booking').then(module => ({ default: module.BookingPage })));
+const BookingSuccessPage = lazy(() => import('./pages/Booking').then(module => ({ default: module.BookingSuccessPage })));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
+const AdminLoginPage = lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminLoginPage })));
+const AdminBookings = lazy(() => import('./pages/AdminBookings').then(module => ({ default: module.AdminBookings })));
+const AdminCustomersPage = lazy(() => import('./pages/AdminData').then(module => ({ default: module.AdminCustomersPage })));
+const AdminFleetPage = lazy(() => import('./pages/AdminData').then(module => ({ default: module.AdminFleetPage })));
+const AdminPaymentsPage = lazy(() => import('./pages/AdminData').then(module => ({ default: module.AdminPaymentsPage })));
+const AdminPricingPage = lazy(() => import('./pages/AdminData').then(module => ({ default: module.AdminPricingPage })));
+const EntityPage = lazy(() => import('./pages/AdminData').then(module => ({ default: module.EntityPage })));
+const AdminDocumentsPage = lazy(() => import('./pages/AdminDocuments').then(module => ({ default: module.AdminDocumentsPage })));
+const AdminCalendarPage = lazy(() => import('./pages/AdminOperations').then(module => ({ default: module.AdminCalendarPage })));
+const AdminGPSPage = lazy(() => import('./pages/AdminOperations').then(module => ({ default: module.AdminGPSPage })));
+const AdminReportsPage = lazy(() => import('./pages/AdminOperations').then(module => ({ default: module.AdminReportsPage })));
 
 function ScrollManager() {
   const { pathname, hash } = useLocation();
@@ -23,7 +35,7 @@ function ScrollManager() {
 }
 function NotFound() { const { t } = useApp(); return <div className="container section-space not-found"><span className="eyebrow">404 / A LITTLE DETOUR</span><EmptyState title={t('Sepertinya kita salah belok.', 'Looks like we took a wrong turn.')} description={t('Halaman ini tidak ditemukan. Mari kembali ke perjalanan Anda.', 'This page could not be found. Let us get you back on track.')} icon="route" action={<Link to="/" className="btn btn-primary">{t('Kembali ke beranda', 'Back to home')}<Icon name="arrow-right" /></Link>} /></div>; }
 export default function App() {
-  return <MotionConfig reducedMotion="user"><AppProvider><BrowserRouter><ScrollManager /><Routes>
+  return <MotionConfig reducedMotion="user"><AppProvider><BrowserRouter><ScrollManager /><Suspense fallback={<div className="route-loading" aria-label="Loading page" />}><Routes>
     <Route element={<PublicLayout />}>
       <Route index element={<HomePage />} />
       <Route path="armada" element={<FleetPage />} />
@@ -53,5 +65,5 @@ export default function App() {
       <Route path="laporan" element={<AdminReportsPage />} />
     </Route>
     <Route element={<PublicLayout />}><Route path="*" element={<NotFound />} /></Route>
-  </Routes></BrowserRouter></AppProvider></MotionConfig>;
+  </Routes></Suspense></BrowserRouter></AppProvider></MotionConfig>;
 }
