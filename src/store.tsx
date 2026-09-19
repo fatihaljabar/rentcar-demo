@@ -13,8 +13,26 @@ interface AppContextType {
   resetDemo: () => void;
 }
 const AppContext = createContext<AppContextType | null>(null);
+const legacyImagePaths: Record<string, string> = {
+  '/images/avanza.jpg': '/images/avanza.webp',
+  '/images/bigbus.jpg': '/images/bigbus.webp',
+  '/images/bus.jpg': '/images/bus.webp',
+  '/images/elf.jpg': '/images/elf.webp',
+  '/images/hiace.jpg': '/images/hiace.webp',
+  '/images/innova.jpg': '/images/innova.webp',
+};
 function readStorage<T>(key: string, fallback: () => T): T {
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) as T : fallback(); } catch { return fallback(); }
+}
+function migrateStoredData(data: DemoData): DemoData {
+  let changed = false;
+  const fleet = data.fleet.map(item => {
+    const image = legacyImagePaths[item.image];
+    if (!image) return item;
+    changed = true;
+    return { ...item, image };
+  });
+  return changed ? { ...data, fleet } : data;
 }
 function readSearch(): SearchState {
   const saved = readStorage('nusaride-search', () => defaultSearch);
@@ -24,7 +42,7 @@ function readSearch(): SearchState {
   return { ...defaultSearch, ...saved, start, end };
 }
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<DemoData>(() => readStorage('nusaride-data-v1', createSeedData));
+  const [data, setData] = useState<DemoData>(() => migrateStoredData(readStorage('nusaride-data-v1', createSeedData)));
   const [search, setSearch] = useState<SearchState>(readSearch);
   const [lang, setLang] = useState<'id' | 'en'>(() => readStorage('nusaride-lang', () => 'id'));
   const [dark, setDark] = useState<boolean>(() => readStorage('nusaride-dark', () => false));
@@ -36,7 +54,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const syncData = (event: StorageEvent) => {
       if (event.key !== 'nusaride-data-v1' || !event.newValue) return;
       try {
-        const incoming = JSON.parse(event.newValue) as DemoData;
+        const incoming = migrateStoredData(JSON.parse(event.newValue) as DemoData);
         setData(current => JSON.stringify(current) === event.newValue ? current : incoming);
       } catch { /* Ignore invalid data from another tab. */ }
     };
